@@ -45,6 +45,8 @@
         "error": {
             "cannot_connect": "Failed to connect",
             "invalid_auth": "Invalid authentication",
+            "invalid_api_region": "The API-key region prefix is not supported. Create a new key on tuya.ai for your account region.",
+            "device_not_found": "The device does not exist or is not authorized for this API key. Check that the Device ID and API key belong to the same Tuya account.",
             "unknown": "Unexpected error",
             "qr_not_confirmed": "QR code not scanned/confirmed yet in the app — try again, or scan it now if you haven't",
             "qr_request_failed": "Could not request a QR code from Tuya. Check your User Code and try again."

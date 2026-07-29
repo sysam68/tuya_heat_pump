@@ -7,7 +7,7 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResult
-from homeassistant.exceptions import HomeAssistantError
+from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
 from homeassistant.helpers import selector
 
 from .const import (
@@ -31,8 +31,9 @@ from .const import (
     CONNECTION_CLOUD,
     CONNECTION_CLOUD_END_USER,
     CONNECTION_LOCAL,
+    API_KEY_REGIONS,
 )
-from .coordinator import TuyaScaleDataUpdateCoordinator
+from .coordinator import TuyaEndUserApiError, TuyaScaleDataUpdateCoordinator
 from .sharing_mqtt import SharingQRLogin
 import tinytuya
 
@@ -138,9 +139,12 @@ async def validate_input(hass: HomeAssistant, data: dict, connection_type: str) 
 
     if connection_type in (CONNECTION_CLOUD, CONNECTION_CLOUD_END_USER):
         if connection_type == CONNECTION_CLOUD_END_USER:
-            api_key = data.get(CONF_API_KEY, "")
+            api_key = data.get(CONF_API_KEY, "").strip()
             if not api_key.startswith("sk-"):
                 raise InvalidAuth("A Tuya API key beginning with sk- is required")
+            if api_key[3:5].upper() not in API_KEY_REGIONS:
+                raise InvalidApiRegion
+            data[CONF_API_KEY] = api_key
         elif not data.get(CONF_ACCESS_ID) or not data.get(CONF_ACCESS_KEY):
             raise InvalidAuth("Access ID and Access Secret are required")
 
@@ -152,6 +156,21 @@ async def validate_input(hass: HomeAssistant, data: dict, connection_type: str) 
             device_info = await coordinator.get_device_info()
             if not device_info:
                 raise CannotConnect("Device was not found or is not accessible")
+        except ConfigEntryAuthFailed as err:
+            _LOGGER.error("Tuya end-user authentication failed: %s", err)
+            raise InvalidAuth("Invalid end-user API key") from err
+        except TuyaEndUserApiError as err:
+            _LOGGER.error(
+                "Tuya end-user API validation failed (code=%s): %s",
+                err.code,
+                err.message,
+            )
+            if str(err.code) == "40000901":
+                raise DeviceNotFound from err
+            message = err.message.lower()
+            if any(word in message for word in ("token", "api key", "auth", "permission")):
+                raise InvalidAuth("Invalid or unauthorized end-user API key") from err
+            raise CannotConnect(str(err)) from err
         except Exception as err:
             _LOGGER.error("Cloud validation error: %s", err)
             if "token" in str(err).lower() or "auth" in str(err).lower():
@@ -338,6 +357,10 @@ class TuyaHeatpumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 errors["base"] = "cannot_connect"
             except InvalidAuth:
                 errors["base"] = "invalid_auth"
+            except InvalidApiRegion:
+                errors["base"] = "invalid_api_region"
+            except DeviceNotFound:
+                errors["base"] = "device_not_found"
             except Exception:
                 _LOGGER.exception("Unexpected exception")
                 errors["base"] = "unknown"
@@ -452,3 +475,11 @@ class CannotConnect(HomeAssistantError):
 
 class InvalidAuth(HomeAssistantError):
     """Error to indicate there is invalid auth."""
+
+
+class InvalidApiRegion(HomeAssistantError):
+    """Error to indicate the API-key region prefix is unsupported."""
+
+
+class DeviceNotFound(HomeAssistantError):
+    """Error to indicate the device is unavailable to this API key."""
