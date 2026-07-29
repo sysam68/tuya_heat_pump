@@ -2,6 +2,24 @@
 
 MODEL_NAME = "AMT-Pool Mini"
 
+CLIMATE_TYPES = {
+    "heat_pump": {
+        "name": "Heat Pump",
+        "power_code": "switch",
+        "current_temperature_code": "temp_current",
+        "target_temperature_code": "temp_set",
+        "mode_code": "mode",
+        "hvac_modes": {
+            "Heat": "heat",
+            "Cool": "cool",
+            "Auto": "auto",
+        },
+        "min_temp": 0,
+        "max_temp": 40,
+        "target_temperature_step": 1,
+    },
+}
+
 SENSOR_TYPES = {
     "temp_current": {
         "dp_id": 3,
