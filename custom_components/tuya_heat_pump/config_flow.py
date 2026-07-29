@@ -125,6 +125,12 @@ STEP_LOCAL_OPTIONS_SCHEMA = vol.Schema(
 
 async def validate_input(hass: HomeAssistant, data: dict, connection_type: str) -> dict:
     """Validate the user input allows us to connect."""
+    # Copy/paste from Tuya portals can include invisible whitespace. Normalize
+    # identifiers before building URLs and persist the normalized values.
+    data[CONF_DEVICE_ID] = data.get(CONF_DEVICE_ID, "").strip()
+    if not data[CONF_DEVICE_ID]:
+        raise DeviceNotFound
+
     # Mock ConfigEntry oluştur (basit ve temiz şekilde)
     mock_config = type(
         "MockConfigEntry",
