@@ -1,0 +1,122 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "data": {
+          "access_id": "Access ID",
+          "access_key": "Access Secret",
+          "api_key": "Clé API End-user (sk-...)",
+          "device_id": "ID de l’appareil",
+          "region": "Région",
+          "connection_type": "Type de connexion",
+          "user_code": "Code utilisateur (facultatif — MQTT)"
+        },
+        "data_description": {
+          "user_code": "Disponible dans l’application Tuya sous Moi → Paramètres → Compte et sécurité → Code utilisateur. Si ce champ est renseigné, un QR code permettra d’essayer d’activer les mises à jour instantanées MQTT."
+        },
+        "description": "Sélectionnez un type de connexion et renseignez uniquement ses identifiants.\n\n• API Cloud End-user : clé API sk- obtenue sur tuya.ai\n• Plateforme Cloud IoT : Access ID et Access Secret\n• Local : informations du réseau local à l’étape suivante",
+        "title": "Configuration de Tuya Heat Pump"
+      },
+      "local": {
+        "data": {
+          "ip": "Adresse IP de l’appareil",
+          "local_key": "Clé locale",
+          "protocol": "Version du protocole"
+        },
+        "description": "Saisissez les paramètres de connexion locale.\n\nL’appareil doit être sur le même réseau que Home Assistant.",
+        "title": "Configuration locale"
+      },
+      "cloud_options": {
+        "data": {
+          "scan_interval": "Intervalle d’actualisation (minutes)"
+        },
+        "description": "Configurez l’intervalle d’actualisation Cloud.\n\nUne valeur faible produit des mises à jour plus rapides, mais davantage d’appels API.",
+        "title": "Configuration Cloud"
+      },
+      "cloud_qr": {
+        "data": {
+          "qr": "QR code"
+        },
+        "description": "Dans Tuya Smart ou Smart Life, appuyez sur + → Scanner, puis scannez ce QR code. Revenez ensuite dans Home Assistant et validez.",
+        "title": "Activer les mises à jour instantanées"
+      }
+    },
+    "error": {
+      "cannot_connect": "Connexion impossible. Consultez les journaux Home Assistant pour connaître la réponse de Tuya.",
+      "invalid_auth": "Clé API ou identifiants incorrects",
+      "invalid_api_region": "Le préfixe régional de la clé API n’est pas pris en charge. Créez une nouvelle clé sur tuya.ai pour la région de votre compte.",
+      "device_not_found": "L’appareil n’existe pas ou n’est pas autorisé pour cette clé. Vérifiez que l’ID de l’appareil et la clé API appartiennent au même compte Tuya.",
+      "unknown": "Erreur inattendue",
+      "qr_not_confirmed": "Le QR code n’a pas encore été confirmé dans l’application",
+      "qr_request_failed": "Impossible d’obtenir un QR code auprès de Tuya"
+    },
+    "abort": {
+      "already_configured": "Cet appareil est déjà configuré."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {},
+        "description": "Configurez les paramètres de l’appareil.",
+        "title": "Configuration de Tuya Heat Pump"
+      },
+      "cloud_options": {
+        "data": {
+          "scan_interval": "Intervalle d’actualisation (minutes)"
+        },
+        "description": "Configurez l’intervalle d’actualisation Cloud.",
+        "title": "Paramètres Cloud"
+      },
+      "local_options": {
+        "data": {
+          "ip": "Adresse IP de l’appareil",
+          "local_key": "Clé locale",
+          "protocol": "Version du protocole"
+        },
+        "description": "Modifiez les paramètres de connexion locale.",
+        "title": "Paramètres locaux"
+      }
+    }
+  },
+  "entity": {
+    "select": {
+      "work_mode": {
+        "name": "Mode de fonctionnement",
+        "state": {
+          "cool": "Refroidissement",
+          "heat": "Chauffage",
+          "auto": "Automatique",
+          "hot_water": "Eau chaude sanitaire",
+          "cool_hot_water": "Refroidissement + ECS",
+          "heat_hot_water": "Chauffage + ECS",
+          "auto_dhw": "Automatique + ECS"
+        }
+      }
+    }
+  },
+  "issues": {
+    "mqtt_token_invalid": {
+      "title": "La connexion MQTT doit être renouvelée",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Restaurer les mises à jour instantanées",
+            "description": "Scannez le QR code avec Tuya Smart ou Smart Life, puis revenez dans Home Assistant et validez.",
+            "data": {
+              "qr": "QR code"
+            }
+          }
+        },
+        "error": {
+          "qr_not_confirmed": "Le QR code n’a pas encore été confirmé",
+          "qr_request_failed": "Impossible d’obtenir un QR code auprès de Tuya"
+        },
+        "abort": {
+          "entry_not_found": "L’entrée d’intégration est introuvable.",
+          "no_user_code": "Aucun code utilisateur n’est enregistré."
+        }
+      }
+    }
+  }
+}

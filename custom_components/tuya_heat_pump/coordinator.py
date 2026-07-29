@@ -54,6 +54,16 @@ from .raw_codec import encode_raw_field
 
 _LOGGER = logging.getLogger(__name__)
 
+
+class TuyaEndUserApiError(Exception):
+    """Error returned by the Tuya 2C end-user API."""
+
+    def __init__(self, code: int | str | None, message: str) -> None:
+        self.code = code
+        self.message = message
+        super().__init__(f"Tuya API error {code or 'unknown'}: {message}")
+
+
 def make_api_request(url: str, headers: dict, method: str = "GET", data: dict = None) -> requests.Response:
     """Make API request."""
     try:
@@ -602,12 +612,23 @@ class TuyaScaleDataUpdateCoordinator(DataUpdateCoordinator):
                         f"{self.api_endpoint}{path}",
                         self._end_user_headers(),
                     )
+                    if response.status_code in (401, 403):
+                        raise ConfigEntryAuthFailed(
+                            f"Tuya rejected the end-user API key (HTTP {response.status_code})"
+                        )
+                    response.raise_for_status()
                     result = response.json()
                     if not result.get("success", False):
-                        raise ConfigEntryAuthFailed(
-                            result.get("msg", ERROR_AUTH)
+                        raise TuyaEndUserApiError(
+                            result.get("code"),
+                            result.get("msg", ERROR_CONN),
                         )
                     device_data = result["result"]
+                    if not device_data:
+                        raise TuyaEndUserApiError(
+                            40000901,
+                            "The device does not exist or is not authorized for this API key",
+                        )
                     self.device_name = device_data.get("name", DEFAULT_NAME)
                     product_name = device_data.get("product_name", DEFAULT_MODEL)
                     self.is_online = device_data.get("online", True)
@@ -665,6 +686,8 @@ class TuyaScaleDataUpdateCoordinator(DataUpdateCoordinator):
 
             except Exception as err:
                 _LOGGER.error("Error getting device info: %s", str(err))
+                if self._is_end_user_cloud:
+                    raise
                 return {}
         else:
             self.device_name = f"Tuya Heat Pump (Local) {self.device_id[-6:]}"
