@@ -7,6 +7,7 @@ from homeassistant.const import (
 
 DOMAIN = "tuya_heat_pump"
 PLATFORMS = [
+    Platform.CLIMATE,
     Platform.SENSOR,
     Platform.BINARY_SENSOR,
     Platform.SWITCH,

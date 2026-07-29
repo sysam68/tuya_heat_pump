@@ -20,6 +20,7 @@ A custom Home Assistant integration for monitoring and controlling supported Tuy
 - Per-model mappings for sensors and controls
 - Automatic fallback to the default mapping when a Model ID is unknown
 - Home Assistant entities for:
+  - native climate controls for explicitly mapped models
   - sensors and binary sensors
   - switches
   - numeric settings
