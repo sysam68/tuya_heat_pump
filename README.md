@@ -4,7 +4,7 @@
   <img src="https://raw.githubusercontent.com/Korkuttum/tuya_heat_pump/main/images/heatpump.webp" alt="Tuya Heat Pump" width="200">
 </p>
 
-A custom Home Assistant integration for monitoring and controlling supported Tuya-based heat pumps through the Tuya Cloud API or directly over the local network.
+A custom Home Assistant integration for monitoring and controlling supported Tuya-based heat pumps through the Tuya End-user API, the legacy Tuya IoT Platform API, or directly over the local network.
 
 [![Open in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Korkuttum&repository=tuya_heat_pump&category=integration)
 
@@ -13,7 +13,8 @@ A custom Home Assistant integration for monitoring and controlling supported Tuy
 
 ## Features
 
-- Cloud connection through the Tuya IoT Platform
+- Cloud connection through the Tuya End-user API
+- Legacy Cloud connection through the Tuya IoT Platform
 - Local LAN connection through TinyTuya
 - Optional MQTT push updates through the Tuya Smart or Smart Life app
 - Per-model mappings for sensors and controls
@@ -42,11 +43,13 @@ If your device is not listed or produces missing, unavailable, or incorrect enti
 
 - Home Assistant 2023.1.0 or newer
 - A Tuya Smart or Smart Life account with the heat pump already paired
-- A Tuya IoT Platform Cloud project linked to that app account
-- The following Tuya project values:
+- A Device ID
+- For the recommended End-user API mode:
+  - a Tuya API key beginning with `sk-`, obtained from [tuya.ai](https://tuya.ai/)
+- For legacy Tuya IoT Platform mode:
+  - a Cloud project linked to the app account
   - Access ID
   - Access Secret (shown as **Access Key** in the integration)
-  - Device ID
   - correct data-center region
 - For local mode:
   - device IP address
@@ -54,10 +57,17 @@ If your device is not listed or produces missing, unavailable, or incorrect enti
   - Tuya protocol version: 3.1, 3.3, 3.4, or 3.5
   - Home Assistant and the heat pump on the same local network
 
-> [!NOTE]
-> The setup form currently requests the Tuya Cloud credentials for both connection modes. In local mode, they are used to retrieve device information and select the correct model mapping; normal status updates and commands then use the LAN connection.
+## Configure the Tuya End-user API
 
-## Configure the Tuya IoT Platform
+This is the recommended Cloud setup:
+
+1. Obtain an API key beginning with `sk-` from [tuya.ai](https://tuya.ai/).
+2. During integration setup, select **Cloud End-user API**.
+3. Enter the API key and Device ID.
+
+The integration detects the Tuya data-center endpoint from the API-key prefix.
+
+## Configure the legacy Tuya IoT Platform API
 
 1. Sign in to the [Tuya IoT Platform](https://iot.tuya.com/).
 2. Open **Cloud > Development** or **Cloud > Project Management**, then create or select a Cloud project.
@@ -104,17 +114,20 @@ In Home Assistant:
 1. Open **Settings > Devices & services**.
 2. Select **Add integration**.
 3. Search for **Tuya Heat Pump**.
-4. Enter the Access ID, Access Key, Device ID, and region.
-5. Select a connection type.
-6. Complete the fields for the selected mode.
+4. Select a connection type.
+5. Enter the Device ID and the credentials required by that mode:
+   - **Cloud End-user API:** API Key (`sk-...`)
+   - **Cloud IoT Platform:** Access ID, Access Secret, and region
+   - **Local:** device IP, Local Key, and protocol version
 
 ### Connection modes
 
 | Mode | Data path | Additional values | Update behavior | Main trade-off |
 | --- | --- | --- | --- | --- |
-| Cloud | Tuya IoT API | None beyond the common Cloud credentials | Polling, 3 minutes by default | Works remotely but depends on Tuya Cloud and API availability |
+| Cloud End-user API | Tuya End-user API | `sk-...` API Key | Polling, 3 minutes by default | Simplest Cloud setup; depends on Tuya Cloud and API availability |
+| Cloud IoT Platform | Legacy Tuya IoT API | Access ID, Access Secret, region | Polling, 3 minutes by default | Requires a configured Tuya developer project |
 | Local | Direct LAN connection | IP, Local Key, protocol version | Local status/push handling | Fast and avoids Cloud API limits for normal operation, but requires LAN reachability and valid local credentials |
-| Cloud + MQTT | Tuya IoT API plus Tuya app sharing | Optional User Code and QR approval | Push when coverage is sufficient; polling remains as fallback | Update coverage varies by device and Tuya's standard instruction set |
+| Cloud + MQTT | Either Cloud API plus Tuya app sharing | Optional User Code and QR approval | Push when coverage is sufficient; polling remains as fallback | Update coverage varies by device and Tuya's standard instruction set |
 
 The cloud polling interval can be changed from the integration options between 1 and 60 minutes.
 
